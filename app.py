@@ -1,155 +1,129 @@
-# Finds details inside HTML entities. Vulnerable. Won't work if there is any change in webpage's layout. 
+# Robust, Efficient approach.
 
-import csv, re, requests
+import json, re, requests
 
 from bs4 import BeautifulSoup
 from slugify import slugify
 
-# https://www.tunefind.com/show/louie/season-1
-_base_url = "https://www.tunefind.com/{}/{}/season-{}/{}"
-_type = "show"
+# https://www.tunefind.com/show/louie/season-1/
+_base_url = "https://www.tunefind.com/show/{}/{}/{}"
 
-song_regex = r">([a-z0-9]+)<"
-
-def getSlug(_name):
-    """
-    Returns slugified string for the Input
-
-    @params:
-    _name: String: input string to be slugified
-    """
-    return slugify(_name)
-
-def getSoup(_url, _type, _name, _season, _episode_link):
+def getSoup(_url, _name, _season="", _episode_link=""):
     """
     Returns a html-parsed-BeautifulSoup object for the given URL.
     @params:
     _url: String: the http(s) link to get html from
-    _type: String: show|movie
     _name: String: name of the show|movie
     _season: Integer: season number of the show|movie
+    _episode_link: Integer: Unique number for the episode to form its hyperlink.
     """
+    if _season:
+        _season = 'season-' + str(_season)
     try:
-        r = requests.get(_url.format(_type, _name, _season, _episode_link))
+        # print(_url.format(_name, _season, _episode_link))
+        r = requests.get(_url.format(_name, _season, _episode_link))
+
     except Exception:
-        exit("\n***ERROR. Check Internet and Input again:\n", _url.format(_type, _name, _season))    
+        exit("\n***ERROR. Check Internet and Input again:\n")    
 
     return BeautifulSoup(r.text, 'html.parser')
 
-# def validateSeason(_entered, _actual):
-#     """
-#     Returns seasons list if requested seasons are valid for the show. False, otherwise.
-
-#     @params:
-#     _entered: String: Season(s) entered by the user. Eg: 1 or 1-3 or 2,5,7,3
-#     _actual: Integer: Maximum number of seasons available for the show.
-#     """
-#     nums = _entered.strip()
-#     nums = set(nums)
-#     try:
-#         if ',' in nums:
-#             nums = _entered.split(',')
-#             valid = [isinstance(int(i), int) for i in nums]
-#             for i in nums:
-#                 if int(i) > _actual:
-#                     raise ValueError
-
-#         elif _entered.count('-') == 1:
-#             nums = _entered.split('-')
-#             if len(nums) == 2:
-#                 for i in nums:
-#                     if int(i) > _actual:
-#                         raise ValueError
-#                 nums = range(int(nums[0]), int(nums[1]))
-#             else:
-#                 raise ValueError
-
-#         elif _entered.count('-') > 1:
-#             raise ValueError
-
-#     except ValueError:
-#         print("Why you gotta be that way? Type correctly now: ")
-#         return False
-
-#     return nums
-
-# TODO: for all seasons
 if __name__ == "__main__":
-    cont_season = 'y'
-    _season = 1
-    _name = getSlug("orange is the new black")
-    print(_name)
-    soup = getSoup(_base_url, _type, _name, _season, "")
+    _input_name = slugify(input("Name of the show: ").strip())
+    _soup = getSoup(_base_url, _input_name)
+    _soup_text = _soup.get_text()
+    _js = "{" + _soup_text[_soup_text.find('"alertMessage"'): _soup_text.find('}};') + 2]
+    # main source of data
+    _json = json.loads(_js)
+    
+    # show level
+    _show_cont = 'y'
+    while _show_cont == 'y' or _show_cont == 'Y':
+        try:
+            _json_show = _json['show']['result']
+            _show_name = _json_show['show']['name']
+            _season_id_list = _json_show['seasons']
+            _season_count = len(_season_id_list)
+            _latest_ep = _json_show['latest_episode']
 
-    _season_count = soup.find_all('ul')[1]
-    _season_count = int((_season_count.find_all('li')[-1].find('a')['href'])[-1])
-    print("Seasons Found:", _season_count)
-    while cont_season == 'y' or cont_season == 'Y':
-        _season_wanted = input("Which season's songs do you want to see? 1 to {} (0 for all): ".format(_season_count))
-        _season_wanted = int(_season_wanted)
-        _season_start = 1 if _season_wanted == 0 else _season_wanted
-        _season_end = _season_count + 1 if _season_wanted == 0 else _season_wanted + 1
+            print("\n", _show_name, "\n Total Seasons:", _season_count)
+            # each season's details
+            for _season_id in _season_id_list:
+                # TODO: Store this info. Create database.
+                _season_id = str(_season_id)
+                _season_name = _json['entities']['seasons'][_season_id]['group_name']
+                _season_num = _json['entities']['seasons'][_season_id]['group_sequence']
+                _season_song_count = _json['entities']['seasons'][_season_id]['songs_count']
+                _season_episode_count = _json['entities']['seasons'][_season_id]['episodes_count']
 
-        for curr_season in range(_season_start, _season_end):
-            _season_soup = getSoup(_base_url, _type, _name, curr_season, "")
-            _lists = _season_soup.find_all('li')
-            _episode_count = 0
-            _link_dict = {}
-            for i in _lists:
-                if i.find('h3'):
-                    # TODO: store episode link if _song_count != 0
-                    _episode_count += 1
-                    _song_count = 0
-                    _link = ""
-                    _song_count_html = i.find('li')
-                    match = re.findall(song_regex, str(_song_count_html))
-                    if match:
-                        _song_count = match[0]
-                        if int(match[0]):
-                            pass
-                            # Go to each episode page to get song names
-                            # https://www.tunefind.com/show/louie/season-1/_link
-                            _link = str(i.find('a')['href'])
-                            _link_dict[_episode_count] = _link[_link.rfind('/')+1:]
-
-                    _label = i.find('a').string
-                    _air_date = i.find('time').string
-                    print(_song_count, "songs in", _label, "aired on", _air_date, _link)
-
-            _episode_wanted = input("Which episode's songs do you want to see? 1 to {} (0 for all): ".format(_episode_count))
-            _episode_wanted = int(_episode_wanted)
-            _episode_start = 1 if _episode_wanted == 0 else _episode_wanted
-            _episode_end = _episode_count + 1 if _episode_wanted == 0 else _episode_wanted + 1
-
-            for curr_episode in range(_episode_start, _episode_end):
-                if _link_dict.get(curr_episode):
-                    # if curr_episode contains non-zero songs, get songs.
-                    _episode_soup = getSoup(_base_url, _type, _name, curr_season, _link_dict[curr_episode])
-                    _e_title = _episode_soup.title.string[:-11]
-                    print(_e_title)
-                    print(_episode_soup.get_text())
-                    # get songs now.
-                    
-                    # Work abandoned here. Reason: More convenient, efficient and robust approach found.
-                    
-                    # print(episode_soup.prettify())
+                print("\n ", _season_name, "    Episodes: ", _season_episode_count, "    Songs: ",
+                    _season_song_count, sep="")
+        except KeyError:
+            print("Show not found.")
         
-        cont_season = input("More Seasons? y/n ")
+        # season level
+        _season_cont = 'y'
+        while _season_cont == 'y' or _season_cont == 'Y':
+            _season_wanted = int(input("\n Choose SEASON. 1 to {} (0 for all): ".format(_season_count)))
+            _season_start = 1 if _season_wanted == 0 else _season_wanted
+            _season_end = _season_count + 1 if _season_wanted == 0 else _season_wanted + 1
 
+            for curr_season in range(_season_start, _season_end):
+                _season_soup = getSoup(_base_url, _input_name, curr_season)
+                _season_soup_text = _season_soup.get_text()
+                _season_js = "{" + _season_soup_text[_season_soup_text.find('"alertMessage"'): _season_soup_text.find('}};') + 2]
+                _season_json = json.loads(_season_js)
 
-# Input tv show name
+                _episode_id_list = _season_json['season']['episodes']
+                _episode_count = len(_episode_id_list)
 
-# Look it up on Tunefind
-#     Not Found
-#         Exit
-#     Found
-#         Read HTML containing Season list
-#         Go to each season
-#                 Go to each episode
-#                     Read HTML containing Songs list
-#                     Extract song names
-#                     Store song names
-#             Display song names
-#         Display summary
+                for _episode_id in _episode_id_list:
+                    _episode_id = str(_episode_id)
+                    _episode_name = _season_json['entities']['episodes'][_episode_id]['name']
+                    _episode_num = _season_json['entities']['episodes'][_episode_id]['number']
+                    _episode_aired = _season_json['entities']['episodes'][_episode_id]['airdate_day'] + \
+                                    " " + _season_json['entities']['episodes'][_episode_id]['airdate_month_short'] + \
+                                    " " + _season_json['entities']['episodes'][_episode_id]['airdate_year']
+                    _episode_description = _season_json['entities']['episodes'][_episode_id]['episode_description']
+                    _episode_song_count = _season_json['entities']['episodes'][_episode_id]['song_count']
 
-# Download songs - WIP
+                    print("\n S", curr_season, ".E", _episode_num, " ", _episode_name, "    Aired on: ", 
+                        _episode_aired, "    Songs: ", _episode_song_count, "\n ",
+                        _episode_description, sep="")
+
+                # episode level
+                _episode_cont = 'y'
+                while _episode_cont == 'y' or _episode_cont == 'Y':
+                    _episode_wanted = int(input("\n Choose EPISODE. 1 to {} (0 for all): ".format(_season_count)))
+                    _episode_start = 1 if _episode_wanted == 0 else _episode_wanted
+                    _episode_end = _episode_count + 1 if _episode_wanted == 0 else _episode_wanted + 1
+
+                    for curr_episode in range(_episode_start, _episode_end):
+                        _episode_soup = getSoup(_base_url, _input_name, curr_season, _episode_id_list[curr_episode - 1])
+                        _episode_soup_text = _episode_soup.get_text()
+                        _episode_js = "{" + _episode_soup_text[_episode_soup_text.find('"alertMessage"'): _episode_soup_text.find('}};') + 2]
+                        _episode_json = json.loads(_episode_js)
+                        _episode_song_big = _episode_json['entities']['songs']
+                        _episode_song_true = _episode_json['entities']['song_event']
+                        _episode_artist = _episode_json['entities']['artists']
+                        
+                        print("\n S", curr_season, ".E", curr_episode, sep="")
+                        # song level
+                        for ct, curr_song in enumerate(_episode_song_true):
+                            _song_id = str(_episode_song_true[curr_song]['song_id'])
+                            _song_name = _episode_song_big[_song_id]['name']
+                            _song_artist = _episode_artist[_episode_song_big[_song_id]['artist']]['name']
+                            _song_album = _episode_song_big[_song_id]['album']
+                            _song_description = _episode_song_true[curr_song]['description']
+
+                            print("\n ", ct + 1, ". Song: ", _song_name, "\n Artist: ", _song_artist,
+                             "\n Album: ", _song_album , "\n ", _song_description, sep="")
+
+                    _episode_cont = input("\n Looking for another Episode? y/n : ")
+            _season_cont = input("\n Looking for another Season? y/n : ")
+        _show_cont = input("\n Looking for another Show? y/n : ")
+
+# TODO:
+# Formatting. Song, Artist, Album alignment.
+# Caching. Database.
+# Download
