@@ -1,3 +1,5 @@
+# Finds details inside HTML entities. Vulnerable. Won't work if there is any change in webpage's layout. 
+
 import csv, re, requests
 
 from bs4 import BeautifulSoup
@@ -126,7 +128,10 @@ if __name__ == "__main__":
                     _e_title = _episode_soup.title.string[:-11]
                     print(_e_title)
                     print(_episode_soup.get_text())
-
+                    # get songs now.
+                    
+                    # Work abandoned here. Reason: More convenient, efficient and robust approach found.
+                    
                     # print(episode_soup.prettify())
         
         cont_season = input("More Seasons? y/n ")
