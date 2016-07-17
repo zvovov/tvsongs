@@ -1,7 +1,7 @@
 =======
 tvsongs
 =======
- Find and listen to songs featured in TV shows.
+Find and listen to songs featured in TV shows.
 
 Highlights:
  * Find `that` song you heard in `that` TV show but couldn't find anywhere.
@@ -14,15 +14,15 @@ Highlights:
 
 Requirements
 ------------
- * Python 3
- * The python modules listed in `requirements.txt`_. They will be installed automatically:
+* Python 3
+* The python modules listed in `requirements.txt`_. They will be installed automatically:
 
   * requests
   * beautifulsoup4
   * python-slugify
 
- * A working Internet connection
- * Name of a TV show. ;)
+* A working Internet connection
+* Name of a TV show. ;)
 
 
 Installation
@@ -35,7 +35,7 @@ Installation
 
 Usage
 -----
-.. code-block:: bash
+.. code-block::
 
     $ tvsongs
      Name of the Show: daredevil
@@ -98,5 +98,5 @@ License
   SOFTWARE.
 
 
-.. _let me know here: https://github.com/zvovov/tvsongs
-.. _requirements.txt: https://github.com/zvovov/tvsongs
+.. _let me know here: https://github.com/zvovov/tvsongs/issues
+.. _requirements.txt: https://github.com/zvovov/tvsongs/blob/master/requirements.txt
