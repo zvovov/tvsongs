@@ -3,6 +3,9 @@ tvsongs
 =======
 Find and listen to songs featured in TV shows.
 
+.. image:: https://travis-ci.org/zvovov/tvsongs.svg?branch=master
+    :target: https://travis-ci.org/zvovov/tvsongs
+
 Highlights:
  * Find `that` song you heard in `that` TV show but couldn't find anywhere.
  * Searching is easy - descriptions are provided for each episode.
@@ -28,9 +31,9 @@ Requirements
 Installation
 ------------
 
-.. code-block:: bash
+.. code-block::
 
-    pip3 install tvsongs
+    $ pip3 install tvsongs
 
 
 Usage
