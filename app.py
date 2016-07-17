@@ -9,6 +9,8 @@ from bs4 import BeautifulSoup
 from slugify import slugify
 
 _base_url = "https://www.tunefind.com/show/{}/{}/{}"
+_youtube_url = "https://www.youtube.com/results?search_query={}"
+
 
 def getSoup(_url, _name, _season="", _episode_link=""):
     """
@@ -26,7 +28,7 @@ def getSoup(_url, _name, _season="", _episode_link=""):
     try:
         r = requests.get(_url.format(_name, _season, _episode_link))
     except Exception:
-        sys.exit("\nCONNECTION ERROR: Check your Internet Connection again.\n")
+        sys.exit("\n CONNECTION ERROR: Check your Internet connection again.\n")
 
     return BeautifulSoup(r.text, 'html.parser').get_text()
 
@@ -53,11 +55,24 @@ def checkLimit(_entered, _limit):
     return False
 
 
+def getYoutubeLink(_song, _artist):
+    """
+    Returns the link to YouTube search page for the artist's song
+    """
+    term = _song if len(_song) > 40 else _song + " " + _artist
+    query = slugify(term).replace('-', '+')
+    return _youtube_url.format(query)
+
+
 def main():
     # show level
     _show_cont = 'y'
     while _show_cont.lower() == 'y':
-        _entered_name = input("Name of the Show: ").strip()
+        while True:
+            _entered_name = input(" Name of the Show: ").strip()
+            if _entered_name:
+                break
+        print(" \n Searching...")
         _input_name = slugify(_entered_name)
         _soup = getSoup(_base_url, _input_name)
         _js = "{" + _soup[_soup.find('"alertMessage"'): _soup.find('}};') + 2]
@@ -76,9 +91,9 @@ def main():
             print("\n {}\n Total Seasons: {}".format(_show_name, _season_count))
             _season_song_count_list = [0] * _season_count
             _season_cont = 'y'
+
             # each season's details
             for season_ct, _season_id in enumerate(_season_id_list):
-                # TODO: Store this info. Create database.
                 _season_id = str(_season_id)
                 _season_name = _json['entities']['seasons'][_season_id]['group_name']
                 _season_num = _json['entities']['seasons'][_season_id]['group_sequence']
@@ -88,11 +103,11 @@ def main():
                                 " to " + time.strftime('%b %Y', time.localtime(_json['entities']['seasons'][_season_id]['air_date_end']))
 
                 print("\n {}    Episode(s): {}    Aired: {}\n Song(s): {}".format(_season_name, _season_episode_count,
-                                                                              _season_aired, _season_song_count_list[season_ct]))
+                                                                                  _season_aired, _season_song_count_list[season_ct]))
             if _season_count > 1:
                 print("\n Total Song(s) in {}: {}".format(_show_name, sum(_season_song_count_list)))
         except KeyError:
-            print(" {} was not found.".format(_entered_name))
+            print(" \n {} was not found.\n Type 'tvsongs help' for help ".format(_entered_name))
         
         # season level
         while _season_cont.lower() == 'y':
@@ -171,14 +186,15 @@ def main():
                             _song_album = _episode_song_big[_song_id]['album']
                             _song_description = _episode_song_true[curr_song]['description']
                             
+                            _song_youtube_link = getYoutubeLink(_song_name, _song_artist)
                             _song_artist = _song_artist if _song_artist else "No artist"
                             _song_album = _song_album if _song_album else "No album"
                             _song_description = _song_description if _song_description else "No description"
 
-
-                            print("\n {}. Song: {}\n Artist: {}\n Album: {}\n {}".format(song_ct + 1, _song_name,
-                                                                                         _song_artist, _song_album,
-                                                                                         _song_description))
+                            print("\n {}. Song: {}\n Artist: {}\n Album: {}\n Listen: {}\n {}".format(song_ct + 1, _song_name,
+                                                                                                      _song_artist, _song_album,
+                                                                                                      _song_youtube_link,
+                                                                                                      _song_description))
 
                     if not _season_wanted or not _episode_wanted:
                         break    
@@ -189,4 +205,67 @@ def main():
         _show_cont = input("\n Search songs in another Show? y/n : ")
 
 if __name__ == "__main__":
+    if len(sys.argv) > 1:
+        if sys.argv[1] == 'help':
+            print("""
+
+    >>>>>>>>>>>>>>>>>>>>>>>
+    >>>>    tvsongs    <<<<
+    <<<<<<<<<<<<<<<<<<<<<<<
+
+Find and listen to songs featured in TV shows.
+
+
+    >>>>    Quick How-To:
+
+$ tvsongs
+ Name of the Show: daredevil
+
+ Searching...
+
+ Daredevil
+ Total Seasons: 2
+
+ Season 1    Episode(s): 13    Aired: Apr 2015 to Apr 2015
+ Song(s): 26
+
+ Season 2    Episode(s): 13    Aired: Mar 2016 to Mar 2016
+ Song(s): 17
+
+ Total Song(s) in Daredevil: 43
+
+ Choose Season of Daredevil. 1 to 2 (0 for all): 0
+
+
+    >>>>    Features:
+
+All song data is collected in real-time, therefore up to date. That's why Internet connection is required.
+
+Typing 'exit' or 'quit' at most input prompts will exit the program. Type Ctrl-C to force quit anytime.
+
+Typing '0' when asked for Season will list songs from all seasons from that show.
+
+
+    >>>>    Documentation:
+
+https://github.com/zvovov/tvsongs
+
+
+    >>>>    License:
+
+The MIT License (MIT)
+
+Copyright (c) 2016 Chirag Khatri
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+            """)
+        elif sys.argv[1] == 'about':
+            print("Created by Chirag Khatri")
+        else:
+            print("Type 'tvsongs help' for help")
     main()
