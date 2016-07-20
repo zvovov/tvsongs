@@ -1,4 +1,6 @@
-#!usr/bin/env python3
+#!usr/bin/env python
+
+from __future__ import print_function, unicode_literals
 
 import json
 import sys
@@ -7,6 +9,10 @@ import time
 import requests
 from bs4 import BeautifulSoup
 from slugify import slugify
+
+if (sys.version_info > (3, 0)):
+    raw_input = input
+    unicode = str
 
 _base_url = "https://www.tunefind.com/show/{}/{}/{}"
 _youtube_url = "https://www.youtube.com/results?search_query={}"
@@ -24,7 +30,7 @@ try:
             _episode_link: Integer: Unique number for the episode to form its hyperlink.
         """
         if _season:
-            _season = 'season-' + str(_season)
+            _season = 'season-' + unicode(_season)
 
         try:
             r = requests.get(_url.format(_name, _season, _episode_link))
@@ -70,7 +76,7 @@ try:
         _show_cont = 'y'
         while _show_cont.lower() == 'y':
             while True:
-                _entered_name = input(" Name of the Show: ").strip()
+                _entered_name = raw_input(" Name of the Show: ").strip()
                 if _entered_name:
                     break
             print(" \n Searching...")
@@ -95,7 +101,7 @@ try:
 
                 # each season's details
                 for season_ct, _season_id in enumerate(_season_id_list):
-                    _season_id = str(_season_id)
+                    _season_id = unicode(_season_id)
                     _season_name = _json['entities']['seasons'][_season_id]['group_name']
                     _season_num = _json['entities']['seasons'][_season_id]['group_sequence']
                     _season_episode_count = _json['entities']['seasons'][_season_id]['episodes_count']
@@ -113,7 +119,7 @@ try:
             # season level
             while _season_cont.lower() == 'y':
                 while True:
-                    _season_wanted = input("\n Choose Season of {}. 1 to {} (0 for all): ".format(_show_name, _season_count))
+                    _season_wanted = raw_input("\n Choose Season of {}. 1 to {} (0 for all): ".format(_show_name, _season_count))
                     if checkLimit(_season_wanted, _season_count):
                         _season_wanted = int(_season_wanted)
                         break
@@ -134,7 +140,7 @@ try:
                     _episode_cont = 'y'
 
                     for episode_ct, _episode_id in enumerate(_episode_id_list):
-                        _episode_id = str(_episode_id)
+                        _episode_id = unicode(_episode_id)
                         _episode_name = _season_json['entities']['episodes'][_episode_id]['name']
                         _episode_num = _season_json['entities']['episodes'][_episode_id]['number']
                         _episode_aired = _season_json['entities']['episodes'][_episode_id]['airdate_day'] + \
@@ -155,7 +161,7 @@ try:
                     while _episode_cont.lower() == 'y':
                         if _season_wanted:
                             while True:
-                                _episode_wanted = input("\n Choose Episode of {} S{}. 1 to {} (0 for all): ".format(_show_name,
+                                _episode_wanted = raw_input("\n Choose Episode of {} S{}. 1 to {} (0 for all): ".format(_show_name,
                                                                                                                     curr_season,
                                                                                                                     _episode_count))
                                 if checkLimit(_episode_wanted, _episode_count):
@@ -181,7 +187,7 @@ try:
                                                                           _episode_song_count_list[curr_episode - 1]))
                             # song level
                             for song_ct, curr_song in enumerate(_episode_song_true):
-                                _song_id = str(_episode_song_true[curr_song]['song_id'])
+                                _song_id = unicode(_episode_song_true[curr_song]['song_id'])
                                 _song_name = _episode_song_big[_song_id]['name']
                                 _song_artist = _episode_artist[_episode_song_big[_song_id]['artist']]['name']
                                 _song_album = _episode_song_big[_song_id]['album']
@@ -199,11 +205,11 @@ try:
 
                         if not _season_wanted or not _episode_wanted:
                             break
-                        _episode_cont = input("\n Search songs in another Episode of {} S{}? y/n : ".format(_show_name, curr_season))
+                        _episode_cont = raw_input("\n Search songs in another Episode of {} S{}? y/n : ".format(_show_name, curr_season))
                 if not _season_wanted:
                     break
-                _season_cont = input("\n Search songs in another Season of {}? y/n : ".format(_show_name))
-            _show_cont = input("\n Search songs in another Show? y/n : ")
+                _season_cont = raw_input("\n Search songs in another Season of {}? y/n : ".format(_show_name))
+            _show_cont = raw_input("\n Search songs in another Show? y/n : ")
 
     if __name__ == "__main__":
         if len(sys.argv) > 1:
