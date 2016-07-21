@@ -6,6 +6,7 @@ import json
 import sys
 import time
 
+import re
 import requests
 from bs4 import BeautifulSoup
 from slugify import slugify
@@ -58,9 +59,64 @@ try:
                     return True
         except ValueError:
             return False
-        
+
         return False
 
+    def isSeasonAndEpisodeFormatValid(_sE):
+        """
+        Checks whether Season and episode format is valid. e.g. S4E5
+
+        Parameters:
+            _sE: String: the string entered by user in commandline for Season and Episode (e.g.-  S04E05)
+        """
+        return re.match(r'(s|S)([0-9]|[0-9][0-9])(e|E)([0-9]|[0-9][0-9])$',_sE) is not None
+
+    def getSeasonNumber(_show_name, _season_count, _get_from_cmd):
+        """
+        Returns Season Number from a valid Season and Episode String(if given), or from input
+
+        Parameters:
+            _show_name: String: the string entered by user in commandline for Season and Episode (e.g.-  S04E05)
+            _season_count: Integer: Season count for the show
+            _get_from_cmd: Boolean: Whether to fetch Season Number from cmd arguments(if present) or from input
+        """
+        if(len(sys.argv) > 2 and _get_from_cmd):
+            _sE = sys.argv[2]
+            m = re.match(r'(s|S)(\d+)(e|E)(\d+)$',_sE)
+            if m is not None:
+                return m.group(2)
+            m = re.match(r'(s|S)(\d+)$',_sE)
+            if m is not None:
+                return m.group(2)
+        return raw_input("\n Choose a valid season of {}. 1 to {} (0 for all): ".format(_show_name, _season_count))
+
+    def getEpisodeNumber(_show_name,curr_season,_episode_count, _get_from_cmd):
+        """
+        Returns Episode Number in a valid Season and Episode String(if given), or from input
+
+        Parameters:
+            _show_name: String: the string entered by user in commandline for Season and Episode (e.g.-  S04E05)
+            curr_season: Integer: Currently selected Season number
+            _episode_count: Integer: Episode count in the specified season
+            _get_from_cmd: Boolean: Whether to fetch Episode Number from cmd arguments(if present) or from input
+        """
+        if(len(sys.argv) > 2 and _get_from_cmd):
+            _sE = sys.argv[2]
+            m = re.match(r'(s|S)(\d+)(e|E)(\d+)$',_sE)
+            if m is not None:
+                return m.group(4)
+        return raw_input("\n Choose a valid episode of {} S{}. 1 to {} (0 for all): ".format(_show_name,curr_season,_episode_count))
+
+    def getName(_get_from_cmd):
+        """
+        Returns the name of the show from command line or from input
+
+        Parameters:
+            _get_from_cmd: Boolean: Whether to fetch Name from cmd arguments(if present) or from input
+        """
+        if(_get_from_cmd and len(sys.argv) > 1 and (sys.argv[1] not in ["about","help"]) and (not isSeasonAndEpisodeFormatValid(sys.argv[1])) ):
+            return sys.argv[1]
+        return raw_input(" Name of the Show: ").strip()
 
     def getYoutubeLink(_song, _artist):
         """
@@ -74,11 +130,15 @@ try:
     def main():
         # show level
         _show_cont = 'y'
+        _get_name_from_cmd = True
+        _get_season_from_cmd = True
+        _get_episode_from_cmd = True
         while _show_cont.lower() == 'y':
             while True:
-                _entered_name = raw_input(" Name of the Show: ").strip()
+                _entered_name = getName(_get_name_from_cmd)
                 if _entered_name:
                     break
+            _get_name_from_cmd = False
             print(" \n Searching...")
             _input_name = slugify(_entered_name)
             _soup = getSoup(_base_url, _input_name)
@@ -119,10 +179,13 @@ try:
             # season level
             while _season_cont.lower() == 'y':
                 while True:
-                    _season_wanted = raw_input("\n Choose Season of {}. 1 to {} (0 for all): ".format(_show_name, _season_count))
+                    _season_wanted = getSeasonNumber(_show_name, _season_count, _get_season_from_cmd)
                     if checkLimit(_season_wanted, _season_count):
                         _season_wanted = int(_season_wanted)
                         break
+                    else:
+                        _get_season_from_cmd = False
+                _get_season_from_cmd = False
                 _season_start = 1 if _season_wanted == 0 else _season_wanted
                 _season_end = _season_count + 1 if _season_wanted == 0 else _season_wanted + 1
 
@@ -161,14 +224,15 @@ try:
                     while _episode_cont.lower() == 'y':
                         if _season_wanted:
                             while True:
-                                _episode_wanted = raw_input("\n Choose Episode of {} S{}. 1 to {} (0 for all): ".format(_show_name,
-                                                                                                                    curr_season,
-                                                                                                                    _episode_count))
+                                _episode_wanted = getEpisodeNumber(_show_name, curr_season, _episode_count, _get_episode_from_cmd)
                                 if checkLimit(_episode_wanted, _episode_count):
                                     _episode_wanted = int(_episode_wanted)
                                     break
+                                else:
+                                    _get_episode_from_cmd = False
                         else:
                             _episode_wanted = 0
+                        _get_episode_from_cmd = False
                         _episode_start = 1 if _episode_wanted == 0 else _episode_wanted
                         _episode_end = _episode_count + 1 if _episode_wanted == 0 else _episode_wanted + 1
 
