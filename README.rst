@@ -12,12 +12,11 @@ Highlights:
  * See songs for a specific season and episode, or see songs in all seasons all episodes in one go.
  * Listen to the song with the YouTube link provided along with it.
  * All song data is collected in real-time, therefore up to date.
- * Runs on Python 3.x. No support for Python 2.x yet.
+ * Runs on Python 3.3+ and Python 2.7+
 
 
 Requirements
 ------------
-* Python 3
 * The python modules listed in `requirements.txt`_. They will be installed automatically:
 
   * requests
@@ -33,7 +32,7 @@ Installation
 
 .. code-block::
 
-    $ pip3 install tvsongs
+    $ pip install tvsongs
 
 
 Usage
