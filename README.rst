@@ -67,14 +67,14 @@ For quick help::
 
 
 Support
-=======
+-------
 
 If you encounter any bugs, then please `let me know here`_.
 
 
 
 License
-=======
+-------
 ::
 
   The MIT License (MIT)
