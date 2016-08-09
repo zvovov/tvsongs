@@ -58,7 +58,7 @@ try:
                     return True
         except ValueError:
             return False
-        
+
         return False
 
 
@@ -68,7 +68,23 @@ try:
         """
         term = _song if len(_song) > 50 else _song + " " + _artist
         query = slugify(term).replace('-', '+')
+
         return _youtube_url.format(query)
+
+
+    def getSeasonAirDate(_json):
+        """
+        Checks if season start, end air dates are valid.
+        Returns Air month and year, if valid.
+        Unknown, otherwise.
+
+        Parameters:
+            _json: String: json of a particular season of a show.
+        """
+        start = _json['air_date_start'] if _json['air_date_start'] else None
+        end = _json['air_date_end'] if _json['air_date_end'] else _json['air_date_start']
+
+        return [time.strftime('%b %Y', time.localtime(i)) if i else "Unknown" for i in (start, end)]
 
 
     def main():
@@ -106,11 +122,11 @@ try:
                     _season_num = _json['entities']['seasons'][_season_id]['group_sequence']
                     _season_episode_count = _json['entities']['seasons'][_season_id]['episodes_count']
                     _season_song_count_list[season_ct] = _json['entities']['seasons'][_season_id]['songs_count']
-                    _season_aired = time.strftime('%b %Y', time.localtime(_json['entities']['seasons'][_season_id]['air_date_start'])) + \
-                                    " to " + time.strftime('%b %Y', time.localtime(_json['entities']['seasons'][_season_id]['air_date_end']))
+                    _season_aired = getSeasonAirDate(_json['entities']['seasons'][_season_id])
 
-                    print("\n {}    Episode(s): {}    Aired: {}\n Song(s): {}".format(_season_name, _season_episode_count,
-                                                                                      _season_aired, _season_song_count_list[season_ct]))
+                    print("\n {}    Episode(s): {}    Aired: {} to {}\n Song(s): {}".format(_season_name, _season_episode_count,
+                                                                                      _season_aired[0], _season_aired[1],
+                                                                                      _season_song_count_list[season_ct]))
                 if _season_count > 1:
                     print("\n Total Song(s) in {}: {}".format(_show_name, sum(_season_song_count_list)))
             except KeyError:
