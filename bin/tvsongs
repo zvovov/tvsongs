@@ -116,17 +116,17 @@ try:
                 _season_cont = 'y'
 
                 # each season's details
-                for season_ct, _season_id in enumerate(_season_id_list):
-                    _season_id = unicode(_season_id)
-                    _season_name = _json['entities']['seasons'][_season_id]['group_name']
-                    _season_num = _json['entities']['seasons'][_season_id]['group_sequence']
-                    _season_episode_count = _json['entities']['seasons'][_season_id]['episodes_count']
-                    _season_song_count_list[season_ct] = _json['entities']['seasons'][_season_id]['songs_count']
-                    _season_aired = getSeasonAirDate(_json['entities']['seasons'][_season_id])
+                for season_ct, season_id in enumerate(_season_id_list):
+                    _season_json = _json['entities']['seasons'][unicode(season_id)]
+                    _season_name = _season_json['group_name']
+                    _season_num = _season_json['group_sequence']
+                    _season_episode_count = _season_json['episodes_count']
+                    _season_song_count_list[season_ct] = _season_json['songs_count']
+                    _season_aired = getSeasonAirDate(_season_json)
 
                     print("\n {}    Episode(s): {}    Aired: {} to {}\n Song(s): {}".format(_season_name, _season_episode_count,
-                                                                                      _season_aired[0], _season_aired[1],
-                                                                                      _season_song_count_list[season_ct]))
+                                                                                            _season_aired[0], _season_aired[1],
+                                                                                            _season_song_count_list[season_ct]))
                 if _season_count > 1:
                     print("\n Total Song(s) in {}: {}".format(_show_name, sum(_season_song_count_list)))
             except KeyError:
@@ -155,15 +155,15 @@ try:
                     _episode_song_count_list = [0] * _episode_count
                     _episode_cont = 'y'
 
-                    for episode_ct, _episode_id in enumerate(_episode_id_list):
-                        _episode_id = unicode(_episode_id)
-                        _episode_name = _season_json['entities']['episodes'][_episode_id]['name']
-                        _episode_num = _season_json['entities']['episodes'][_episode_id]['number']
-                        _episode_aired = _season_json['entities']['episodes'][_episode_id]['airdate_day'] + \
-                                        " " + _season_json['entities']['episodes'][_episode_id]['airdate_month_short'] + \
-                                        " " + _season_json['entities']['episodes'][_episode_id]['airdate_year']
-                        _episode_song_count_list[episode_ct] = _season_json['entities']['episodes'][_episode_id]['song_count']
-                        _episode_description = _season_json['entities']['episodes'][_episode_id]['episode_description']
+                    for episode_ct, episode_id in enumerate(_episode_id_list):
+                        _episode_json = _season_json['entities']['episodes'][unicode(episode_id)]
+                        _episode_name = _episode_json['name']
+                        _episode_num = _episode_json['number']
+                        _episode_aired = _episode_json['airdate_day'] + \
+                                        " " + _episode_json['airdate_month_short'] + \
+                                        " " + _episode_json['airdate_year']
+                        _episode_song_count_list[episode_ct] = _episode_json['song_count']
+                        _episode_description = _episode_json['episode_description']
 
                         _episode_description = _episode_description if _episode_description else "No description"
 
@@ -178,8 +178,8 @@ try:
                         if _season_wanted:
                             while True:
                                 _episode_wanted = raw_input("\n Choose Episode of {} S{}. 1 to {} (0 for all): ".format(_show_name,
-                                                                                                                    curr_season,
-                                                                                                                    _episode_count))
+                                                                                                                        curr_season,
+                                                                                                                        _episode_count))
                                 if checkLimit(_episode_wanted, _episode_count):
                                     _episode_wanted = int(_episode_wanted)
                                     break
