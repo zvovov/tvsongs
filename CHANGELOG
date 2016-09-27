@@ -1,3 +1,8 @@
+0.3 - 27 September 2016
+  - Removed dependency on beautifulsoup, python-slugify modules
+  - "$ tvsongs version" added
+  - Development Status is now Production/Stable
+
 0.2 - 28 July 2016
   - Added support for Python 2.7+
 

@@ -3,12 +3,11 @@
 from __future__ import print_function, unicode_literals
 
 import json
+import re
 import sys
 import time
 
 import requests
-from bs4 import BeautifulSoup
-from slugify import slugify
 
 if (sys.version_info > (3, 0)):
     raw_input = input
@@ -19,9 +18,9 @@ _youtube_url = "https://www.youtube.com/results?search_query={}"
 
 
 try:
-    def getSoup(_url, _name, _season="", _episode_link=""):
+    def hitUrl(_url, _name, _season="", _episode_link=""):
         """
-        Returns the html-parsed-BeautifulSoup object for the given URL.
+        Returns the *appropriate* json for the _url
 
         Parameters:
             _url: String: the http(s) link to get html from
@@ -36,8 +35,10 @@ try:
             r = requests.get(_url.format(_name, _season, _episode_link))
         except Exception:
             sys.exit("\n CONNECTION ERROR: Check your Internet connection again.\n")
+        html = r.text
+        js = "{" + html[html.find('"alertMessage"'): html.find('}};') + 2]
 
-        return BeautifulSoup(r.text, 'html.parser').get_text()
+        return json.loads(js)
 
 
     def checkLimit(_entered, _limit):
@@ -62,12 +63,21 @@ try:
         return False
 
 
+    def getSlug(_string):
+        """
+        Returns hyphenated slug for the input _string
+        """
+        s = ''.join(e for e in _string if e.isalnum() or e.isspace())
+        s = re.sub(r'\s+', '-', s)
+        return s.lower()
+
+
     def getYoutubeLink(_song, _artist):
         """
         Returns the link to YouTube search page for the artist's song
         """
         term = _song if len(_song) > 50 else _song + " " + _artist
-        query = slugify(term).replace('-', '+')
+        query = getSlug(term).replace('-', '+')
 
         return _youtube_url.format(query)
 
@@ -96,11 +106,9 @@ try:
                 if _entered_name:
                     break
             print(" \n Searching...")
-            _input_name = slugify(_entered_name)
-            _soup = getSoup(_base_url, _input_name)
-            _js = "{" + _soup[_soup.find('"alertMessage"'): _soup.find('}};') + 2]
+            _input_name = getSlug(_entered_name)
             # main source of data
-            _json = json.loads(_js)
+            _json = hitUrl(_base_url, _input_name)
 
             _season_cont = 'n'
             _episode_cont = 'n'
@@ -146,9 +154,7 @@ try:
                     if _season_song_count_list[curr_season - 1] == 0:
                         print("\n No song(s) in {} S{}".format(_show_name, curr_season))
                         continue
-                    _season_soup = getSoup(_base_url, _input_name, curr_season)
-                    _season_js = "{" + _season_soup[_season_soup.find('"alertMessage"'): _season_soup.find('}};') + 2]
-                    _season_json = json.loads(_season_js)
+                    _season_json = hitUrl(_base_url, _input_name, curr_season)
 
                     _episode_id_list = _season_json['season']['episodes']
                     _episode_count = len(_episode_id_list)
@@ -192,9 +198,7 @@ try:
                             if _episode_song_count_list[curr_episode - 1] == 0:
                                 print("\n No song(s) in {} S{}.E{}".format(_show_name, curr_season, curr_episode))
                                 continue
-                            _episode_soup = getSoup(_base_url, _input_name, curr_season, _episode_id_list[curr_episode - 1])
-                            _episode_js = "{" + _episode_soup[_episode_soup.find('"alertMessage"'): _episode_soup.find('}};') + 2]
-                            _episode_json = json.loads(_episode_js)
+                            _episode_json = hitUrl(_base_url, _input_name, curr_season, _episode_id_list[curr_episode - 1])
                             _episode_song_big = _episode_json['entities']['songs']
                             _episode_song_true = _episode_json['entities']['song_event']
                             _episode_artist = _episode_json['entities']['artists']
@@ -274,6 +278,11 @@ Typing '0' when asked for Season will list songs from all seasons from that show
 https://github.com/zvovov/tvsongs
 
 
+    >>>>    Version:
+
+Type "tvsongs version" to find the version installed in your system.
+
+
     >>>>    License:
 
 The MIT License (MIT)
@@ -301,6 +310,8 @@ SOFTWARE.
                 """)
             elif sys.argv[1] == 'about':
                 print("Created by Chirag Khatri")
+            elif sys.argv[1] == 'version':
+                print("tvsongs 0.3")
             else:
                 print("Type 'tvsongs help' for help")
         main()

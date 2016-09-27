@@ -17,11 +17,9 @@ Highlights:
 
 Requirements
 ------------
-* The python modules listed in `requirements.txt`_. They will be installed automatically:
+* The python modules listed in `requirements.txt`_. These will be installed automatically when you install tvsongs:
 
   * requests
-  * beautifulsoup4
-  * python-slugify
 
 * A working Internet connection
 * Name of a TV show. ;)
