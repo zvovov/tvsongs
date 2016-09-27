@@ -64,6 +64,13 @@ For quick help::
     $ tvsongs help
 
 
+NOTE: If you're using python 2.7.9 or lower, you may see :code:`SNIMissingWarning` or :code:`InsecurePlatformWarning` while using tvsongs. In that case, `do this`_:
+
+::
+
+  pip install 'requests[security]'
+
+
 Support
 -------
 
@@ -100,3 +107,4 @@ License
 
 .. _let me know here: https://github.com/zvovov/tvsongs/issues
 .. _requirements.txt: https://github.com/zvovov/tvsongs/blob/master/requirements.txt
+.. _do this: http://stackoverflow.com/questions/29099404/ssl-insecureplatform-error-when-using-requests-package
