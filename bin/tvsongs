@@ -311,7 +311,7 @@ SOFTWARE.
             elif sys.argv[1] == 'about':
                 print("Created by Chirag Khatri")
             elif sys.argv[1] == 'version':
-                print("tvsongs 0.3")
+                print("tvsongs 0.4")
             else:
                 print("Type 'tvsongs help' for help")
         main()
