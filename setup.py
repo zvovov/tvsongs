@@ -1,7 +1,7 @@
 from setuptools import setup
 
 setup(name='tvsongs',
-      version='0.4',
+      version='0.5',
       description='Find and listen to songs featured in TV shows.',
       keywords='tvsongs tvsong find search listen tv show series songs music featured',
       url='https://github.com/zvovov/tvsongs',
