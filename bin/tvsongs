@@ -168,8 +168,8 @@ try:
                         _episode_aired = _episode_json['airdate_day'] + \
                                         " " + _episode_json['airdate_month_short'] + \
                                         " " + _episode_json['airdate_year']
-                        _episode_song_count_list[episode_ct] = _episode_json['song_count']
-                        _episode_description = _episode_json['episode_description']
+                        _episode_song_count_list[episode_ct] = _episode_json['songs_count']
+                        _episode_description = _episode_json['description']
 
                         _episode_description = _episode_description if _episode_description else "No description"
 
